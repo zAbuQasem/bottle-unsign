@@ -1,6 +1,6 @@
 # bottle-unsign
 
-bottle-unsign is a Python tool for encoding, decoding, and performing dictionary attacks on cookies using HMAC-based encryption.
+bottle-unsign is a Python tool for encoding, decoding, and performing dictionary attacks on bottle framework cookies.
 
 ## Features
 

